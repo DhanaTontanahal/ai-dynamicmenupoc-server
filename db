@@ -1,0 +1,19 @@
+docker pull mysql:latest
+
+
+docker run --name mysql-container -e MYSQL_ROOT_PASSWORD=yourpassword -e MYSQL_DATABASE=menu_logger -p 3306:3306 -d mysql:latest
+
+
+mysql -h 127.0.0.1 -P 3306 -u root -p
+
+
+USE menu_logger;
+
+CREATE TABLE click_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id VARCHAR(50),
+    menu_name VARCHAR(50),
+    click_date DATE,
+    click_count INT DEFAULT 1,
+    timestamps TEXT
+);
