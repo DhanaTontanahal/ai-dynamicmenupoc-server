@@ -3,8 +3,6 @@ from flask_cors import CORS
 import mysql.connector
 import json
 from collections import defaultdict
-from llama_model import get_ranked_menus_with_llama  # Import the LLaMA logic
-
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -19,16 +17,6 @@ db = mysql.connector.connect(
 
 # Cursor for database operations
 cursor = db.cursor(dictionary=True)
-
-# Function to fetch click data for the LLaMA model
-def fetch_click_data_for_llama(user_id):
-    """
-    Fetch click data from the database to send to the LLaMA model.
-    """
-    cursor.execute("SELECT menu_name, SUM(click_count) AS total_clicks FROM click_logs WHERE user_id=%s GROUP BY menu_name", (user_id,))
-    records = cursor.fetchall()
-    input_data = [{"menu_name": record["menu_name"], "click_count": int(record["total_clicks"])} for record in records]
-    return input_data
 
 # Function to log menu clicks
 def log_menu_click(user_id, menu_name, timestamp):
@@ -84,26 +72,8 @@ def log_menu_click_endpoint():
 @app.route("/get-ranked-menus", methods=["GET"])
 def get_ranked_menus():
     user_id = request.args.get("user_id", "user_123")
-    
-    # Step 1: Fetch data from the database
-    input_data = fetch_click_data_for_llama(user_id)
-    print("getting db data..........................")
-    print(input_data)
-    # Step 2: Call the LLaMA model to get ranked results
-    try:
-        ranked_menus = get_ranked_menus_with_llama(input_data)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-    
-    # Step 3: Return the ranked menu data
+    ranked_menus = calculate_menu_ranks(user_id)
     return jsonify({"user_id": user_id, "ranked_menus": ranked_menus})
-
-# API Endpoint: Fetch ranked menus
-# @app.route("/get-ranked-menus", methods=["GET"])
-# def get_ranked_menus():
-#     user_id = request.args.get("user_id", "user_123")
-#     ranked_menus = calculate_menu_ranks(user_id)
-#     return jsonify({"user_id": user_id, "ranked_menus": ranked_menus})
 
 # Run the Flask app
 if __name__ == "__main__":
